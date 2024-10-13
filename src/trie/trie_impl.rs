@@ -180,7 +180,10 @@ where
 
 #[cfg(test)]
 mod search_tests {
-    use crate::{Trie, TrieBuilder};
+    use crate::{
+        trie::test_data::{print_debug, print_debug_builder},
+        Trie, TrieBuilder,
+    };
     use std::iter::FromIterator;
 
     fn build_trie() -> Trie<u8> {
@@ -217,21 +220,18 @@ mod search_tests {
     #[test]
     fn print_debug() {
         let trie: Trie<u8> = ["a"].into_iter().collect();
-        assert_eq!(format!("{:?}", trie),
-"Trie(Trie { louds: Louds { lbs: Fid { byte_vec: [160], bit_len: 5, chunks: Chunks { chunks: [Chunk { value: 2, blocks: Blocks { blocks: [Block { value: 1, length: 1 }, Block { value: 1, length: 1 }, Block { value: 2, length: 1 }, Block { value: 2, length: 1 }], blocks_cnt: 4 } }, Chunk { value: 2, blocks: Blocks { blocks: [Block { value: 0, length: 1 }], blocks_cnt: 1 } }], chunks_cnt: 2 }, table: PopcountTable { bit_length: 1, table: [0, 1] } } }, trie_labels: [TrieLabel { label: 97, value: Some(()) }] })"
-        );
+        let actual = format!("{:#?}", trie);
+        assert_eq!(actual, print_debug::EXPECTED_FMT);
     }
 
     #[rustfmt::skip]
     #[test]
     fn print_debug_builder() {
-
         let mut builder = TrieBuilder::new();
         builder.push("a");
         builder.push("app");
-        assert_eq!(format!("{:?}", builder),
-"TrieBuilder(TrieBuilder { naive_trie: Root(NaiveTrieRoot { children: [IntermOrLeaf(NaiveTrieIntermOrLeaf { children: [IntermOrLeaf(NaiveTrieIntermOrLeaf { children: [IntermOrLeaf(NaiveTrieIntermOrLeaf { children: [], label: 112, value: Some(()) })], label: 112, value: None })], label: 97, value: Some(()) })] }) })"
-        );
+        let actual = format!("{:#?}", builder);
+        assert_eq!(actual, print_debug_builder::EXPECTED_FMT);
     }
 
     #[test]
