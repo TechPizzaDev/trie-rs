@@ -209,27 +209,29 @@ impl<Label: Ord, Value> Trie<Label, Value> {
     }
 
     pub(crate) fn label(&self, node_num: LoudsNodeNum) -> &Label {
-        &self.trie_labels[(node_num.0 - 2) as usize].label
+        &self.labels[(node_num.0 - 2) as usize]
     }
 
     pub(crate) fn is_terminal(&self, node_num: LoudsNodeNum) -> bool {
-        if node_num.0 >= 2 {
-            self.trie_labels[(node_num.0 - 2) as usize].value.is_some()
-        } else {
-            false
-        }
+        self.terminals[node_num.0]
     }
 
     pub(crate) fn value(&self, node_num: LoudsNodeNum) -> Option<&Value> {
-        if node_num.0 >= 2 {
-            self.trie_labels[(node_num.0 - 2) as usize].value.as_ref()
+        if self.terminals[node_num.0] {
+            let idx = self.terminals.rank(node_num.0) - 1;
+            Some(&self.values[idx as usize])
         } else {
             None
         }
     }
 
     pub(crate) fn value_mut(&mut self, node_num: LoudsNodeNum) -> Option<&mut Value> {
-        self.trie_labels[(node_num.0 - 2) as usize].value.as_mut()
+        if self.terminals[node_num.0] {
+            let idx = self.terminals.rank(node_num.0) - 1;
+            Some(&mut self.values[idx as usize])
+        } else {
+            None
+        }
     }
 
     pub(crate) fn child_to_ancestors(&self, node_num: LoudsNodeNum) -> AncestorNodeIter {

@@ -879,6 +879,7 @@ name = "trie-rs"
 version = "0.4.2"
 dependencies = [
  "criterion",
+ "fid-rs",
  "lazy_static",
  "louds-rs",
  "mem_dbg",

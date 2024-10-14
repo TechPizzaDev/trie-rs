@@ -13,6 +13,7 @@ edition = "2021"
 
 [dependencies]
 louds-rs = "0.7"
+fid-rs = "0.2"
 mem_dbg = { version = "0.1.4", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 

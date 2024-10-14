@@ -1,6 +1,6 @@
 use crate::internal_data_structure::naive_trie::NaiveTrie;
-use crate::map::TrieLabel;
 use crate::map::{Trie, TrieBuilder};
+use fid_rs::Fid;
 use louds_rs::Louds;
 
 impl<Label: Ord, Value> Default for TrieBuilder<Label, Value> {
@@ -32,24 +32,39 @@ impl<Label: Ord, Value> TrieBuilder<Label, Value> {
     /// Build a [Trie].
     pub fn build(self) -> Trie<Label, Value> {
         let mut louds_bits: Vec<bool> = vec![true, false];
-        let mut trie_labels: Vec<TrieLabel<Label, Value>> = vec![];
+        let mut labels: Vec<Label> = vec![];
+        let mut terminal_bits: Vec<bool> = vec![false, false];
+        let mut values: Vec<Value> = vec![];
+
         for node in self.naive_trie.into_iter() {
             match node {
                 NaiveTrie::Root(_) => {}
                 NaiveTrie::IntermOrLeaf(n) => {
                     louds_bits.push(true);
-                    trie_labels.push(TrieLabel {
-                        label: n.label,
-                        value: n.value,
-                    });
+                    labels.push(n.label);
+
+                    let is_terminal = if let Some(value) = n.value {
+                        values.push(value);
+                        true
+                    } else {
+                        false
+                    };
+                    terminal_bits.push(is_terminal);
                 }
                 NaiveTrie::PhantomSibling => {
                     louds_bits.push(false);
                 }
             }
         }
-        let louds = Louds::from(&louds_bits[..]);
 
-        Trie { louds, trie_labels }
+        let louds = Louds::from(louds_bits.as_slice());
+        let terminals = Fid::from(terminal_bits.as_slice());
+
+        Trie {
+            louds,
+            labels,
+            terminals,
+            values,
+        }
     }
 }

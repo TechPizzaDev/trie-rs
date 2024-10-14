@@ -56,13 +56,65 @@ pub(crate) static EXPECTED_FMT: &str = "Trie(
                 },
             },
         },
-        trie_labels: [
-            TrieLabel {
-                label: 97,
-                value: Some(
-                    (),
-                ),
+        labels: [
+            97,
+        ],
+        terminals: Fid {
+            byte_vec: [
+                32,
+            ],
+            bit_len: 3,
+            chunks: Chunks {
+                chunks: [
+                    Chunk {
+                        value: 0,
+                        blocks: Blocks {
+                            blocks: [
+                                Block {
+                                    value: 0,
+                                    length: 1,
+                                },
+                            ],
+                            blocks_cnt: 1,
+                        },
+                    },
+                    Chunk {
+                        value: 0,
+                        blocks: Blocks {
+                            blocks: [
+                                Block {
+                                    value: 0,
+                                    length: 1,
+                                },
+                            ],
+                            blocks_cnt: 1,
+                        },
+                    },
+                    Chunk {
+                        value: 1,
+                        blocks: Blocks {
+                            blocks: [
+                                Block {
+                                    value: 1,
+                                    length: 1,
+                                },
+                            ],
+                            blocks_cnt: 1,
+                        },
+                    },
+                ],
+                chunks_cnt: 3,
             },
+            table: PopcountTable {
+                bit_length: 1,
+                table: [
+                    0,
+                    1,
+                ],
+            },
+        },
+        values: [
+            (),
         ],
     },
 )";
