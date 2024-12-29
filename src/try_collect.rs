@@ -7,7 +7,8 @@
 //! The simplest usage is like this.
 //!
 //! ```
-//! use trie_rs::try_collect::*;
+//! use trie::try_collect::*;
+//! 
 //! let bytes: Vec<u8> = vec![72, 105];
 //! let s: String = bytes.into_iter().try_collect().unwrap();
 //! assert_eq!(s, "Hi");

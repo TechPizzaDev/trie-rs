@@ -10,11 +10,11 @@
 //! accumulating a query.
 //!
 //! ```rust
-//! use trie_rs::Trie;
+//! use trie::Trie;
 //!
 //! let q = "appli"; // query string
 //! let mut is_match: bool;
-//! let trie = Trie::from_iter(vec!["appli", "application"]);
+//! let trie = Trie::from_iter(vec!["appli", "application"].iter().map(|s| s.bytes()));
 //! for i in 0..q.len() - 1 {
 //!     assert!(!trie.exact_match(&q[0..i]));
 //! }
@@ -38,11 +38,9 @@
 //!
 //! This means the above code restores the time complexity of _O(m log n)_ for
 //! the loop.
-use crate::{
-    map::Trie,
-    try_collect::{TryCollect, TryFromIterator},
-};
-use louds_rs::LoudsNodeNum;
+
+use crate::{map::Trie, try_collect::TryCollect, try_collect::TryFromIterator};
+use louds::LoudsNodeNum;
 
 #[derive(Debug, Clone)]
 /// An incremental search of the trie.
@@ -111,10 +109,13 @@ impl<'a, Label: Ord, Value> IncSearch<'a, Label, Value> {
     /// Resume an incremental search at a particular point.
     ///
     /// ```
-    /// use trie_rs::{Trie, inc_search::{Answer, IncSearch}};
-    /// use louds_rs::LoudsNodeNum;
+    /// use trie::{Trie, inc_search::{Answer, IncSearch}};
+    /// use louds::LoudsNodeNum;
     ///
-    /// let trie: Trie<u8> = ["hello", "bye"].into_iter().collect();
+    /// let trie: Trie<u8> = ["hello", "bye"]
+    ///     .into_iter()
+    ///     .map(|s| s.bytes())
+    ///     .collect();
     /// let mut inc_search = trie.inc_search();
     ///
     /// assert_eq!(inc_search.query_until("he"), Ok(Answer::Prefix));
@@ -268,12 +269,12 @@ mod search_tests {
 
     fn build_trie() -> Trie<u8, u8> {
         let mut builder = TrieBuilder::new();
-        builder.push("a", 0);
-        builder.push("app", 1);
-        builder.push("apple", 2);
-        builder.push("better", 3);
-        builder.push("application", 4);
-        builder.push("アップル🍎", 5);
+        builder.insert("a".bytes(), 0);
+        builder.insert("app".bytes(), 1);
+        builder.insert("apple".bytes(), 2);
+        builder.insert("better".bytes(), 3);
+        builder.insert("application".bytes(), 4);
+        builder.insert("アップル🍎".bytes(), 5);
         builder.build()
     }
 

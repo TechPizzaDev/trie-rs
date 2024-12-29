@@ -1,6 +1,6 @@
 use crate::map::Trie;
 use crate::try_collect::{TryCollect, TryFromIterator};
-use louds_rs::LoudsNodeNum;
+use louds::LoudsNodeNum;
 use std::marker::PhantomData;
 
 #[derive(Debug, Clone)]

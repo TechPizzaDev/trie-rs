@@ -1,9 +1,6 @@
 use super::Trie;
 use crate::map;
 
-#[cfg(feature = "mem_dbg")]
-use mem_dbg::MemDbg;
-
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(mem_dbg::MemDbg, mem_dbg::MemSize))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -16,17 +13,9 @@ impl<Label: Ord> TrieBuilder<Label> {
         Self(map::TrieBuilder::new())
     }
 
-    /// Add a cloneable entry.
-    pub fn push<Arr: AsRef<[Label]>>(&mut self, entry: Arr)
-    where
-        Label: Clone,
-    {
-        self.0.push(entry, ());
-    }
-
-    /// Add an entry.
-    pub fn insert<Arr: IntoIterator<Item = Label>>(&mut self, entry: Arr) {
-        self.0.insert(entry, ());
+    /// Insert the given sequence.
+    pub fn insert<Key: IntoIterator<Item = Label>>(&mut self, key: Key) -> bool {
+        self.0.entry(key).replace(()).is_some()
     }
 
     /// Build a [Trie].

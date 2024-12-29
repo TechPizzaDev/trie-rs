@@ -15,12 +15,16 @@ impl<'trie, Label: Ord, Value> NaiveTrie<Label, Value> {
         })
     }
 
-    pub fn push<Arr: Iterator<Item = Label>>(&'trie mut self, word: Arr, value: Value) {
+    pub fn entry<Arr: Iterator<Item = Label>>(
+        &'trie mut self,
+        word: Arr,
+    ) -> &'trie mut Option<Value> {
         let mut trie = self;
         for chr in word {
             let res = trie
                 .children()
                 .binary_search_by(|child| child.label().cmp(&chr));
+
             match res {
                 Ok(j) => {
                     trie = match trie {
@@ -46,7 +50,7 @@ impl<'trie, Label: Ord, Value> NaiveTrie<Label, Value> {
             };
         }
         match trie {
-            NaiveTrie::IntermOrLeaf(node) => node.value = Some(value),
+            NaiveTrie::IntermOrLeaf(node) => &mut node.value,
             _ => panic!("Unexpected type"),
         }
     }
@@ -90,6 +94,7 @@ impl<'trie, Label: Ord, Value> NaiveTrie<Label, Value> {
 impl<Label: Ord, Value> IntoIterator for NaiveTrie<Label, Value> {
     type Item = NaiveTrie<Label, Value>;
     type IntoIter = NaiveTrieBFIter<Label, Value>;
+
     fn into_iter(self) -> NaiveTrieBFIter<Label, Value> {
         NaiveTrieBFIter::new(self)
     }

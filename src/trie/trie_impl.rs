@@ -4,9 +4,6 @@ use crate::map;
 use crate::try_collect::TryFromIterator;
 use std::iter::FromIterator;
 
-#[cfg(feature = "mem_dbg")]
-use mem_dbg::MemDbg;
-
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(mem_dbg::MemDbg, mem_dbg::MemSize))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -23,10 +20,12 @@ impl<Label: Ord> Trie<Label> {
     /// In the following example we illustrate how to query an exact match.
     ///
     /// ```rust
-    /// use trie_rs::Trie;
+    /// use trie::Trie;
     ///
-    /// let trie = Trie::from_iter(["a", "app", "apple", "better", "application"]);
-    ///
+    /// let trie = Trie::from_iter(["a", "app", "apple", "better", "application"]
+    ///     .into_iter()
+    ///     .map(|s| s.bytes())
+    /// );
     /// assert!(trie.exact_match("application"));
     /// assert!(trie.exact_match("app"));
     /// assert!(!trie.exact_match("appla"));
@@ -45,14 +44,14 @@ impl<Label: Ord> Trie<Label> {
     /// In the following example we illustrate how to query the common prefixes of a query string.
     ///
     /// ```rust
-    /// use trie_rs::Trie;
+    /// use trie::Trie;
     ///
-    /// let trie = Trie::from_iter(["a", "app", "apple", "better", "application"]);
-    ///
+    /// let trie = Trie::from_iter(["a", "app", "apple", "better", "application"]
+    ///     .into_iter()
+    ///     .map(|s| s.bytes())
+    /// );
     /// let results: Vec<String> = trie.common_prefix_search("application").collect();
-    ///
     /// assert_eq!(results, vec!["a", "app", "application"]);
-    ///
     /// ```
     pub fn common_prefix_search<C, M>(
         &self,
@@ -87,16 +86,17 @@ impl<Label: Ord> Trie<Label> {
     /// In the following example we illustrate how to query the postfixes of a query string.
     ///
     /// ```rust
-    /// use trie_rs::Trie;
+    /// use trie::Trie;
     ///
-    /// let trie = Trie::from_iter(["a", "app", "apple", "better", "application"]);
+    /// let trie = Trie::from_iter(["a", "app", "apple", "better", "application"]
+    ///     .into_iter()
+    ///     .map(|s| s.bytes())
+    /// );
     ///
     /// let results: Vec<String> = trie.postfix_search("application").collect();
-    ///
     /// assert!(results.is_empty());
     ///
     /// let results: Vec<String> = trie.postfix_search("app").collect();
-    ///
     /// assert_eq!(results, vec!["le", "lication"]);
     ///
     /// ```
@@ -119,14 +119,15 @@ impl<Label: Ord> Trie<Label> {
     /// lexicographical order.
     ///
     /// ```rust
-    /// use trie_rs::Trie;
+    /// use trie::Trie;
     ///
-    /// let trie = Trie::from_iter(["a", "app", "apple", "better", "application"]);
+    /// let trie = Trie::from_iter(["a", "app", "apple", "better", "application"]
+    ///     .into_iter()
+    ///     .map(|s| s.bytes())
+    /// );
     ///
     /// let results: Vec<String> = trie.iter().collect();
-    ///
     /// assert_eq!(results, vec!["a", "app", "apple", "application", "better"]);
-    ///
     /// ```
     pub fn iter<C, M>(&self) -> Keys<PostfixIter<'_, Label, (), C, M>>
     where
@@ -160,19 +161,19 @@ impl<Label: Ord> Trie<Label> {
     }
 }
 
-impl<Label, C> FromIterator<C> for Trie<Label>
+impl<Label, Key> FromIterator<Key> for Trie<Label>
 where
-    C: AsRef<[Label]>,
+    Key: IntoIterator<Item = Label>,
     Label: Ord + Clone,
 {
     fn from_iter<T>(iter: T) -> Self
     where
         Self: Sized,
-        T: IntoIterator<Item = C>,
+        T: IntoIterator<Item = Key>,
     {
         let mut builder = super::TrieBuilder::new();
-        for k in iter {
-            builder.push(k)
+        for key in iter {
+            builder.insert(key);
         }
         builder.build()
     }
@@ -188,25 +189,32 @@ mod search_tests {
 
     fn build_trie() -> Trie<u8> {
         let mut builder = TrieBuilder::new();
-        builder.push("a");
-        builder.push("app");
-        builder.push("apple");
-        builder.push("better");
-        builder.push("application");
-        builder.push("アップル🍎");
-        builder.build()
+        builder.insert("a".bytes());
+        builder.insert("app".bytes());
+        builder.insert("apple".bytes());
+        builder.insert("better".bytes());
+        builder.insert("application".bytes());
+        builder.insert("アップル🍎".bytes());
+        let trie = builder.build();
+        trie
     }
 
     #[test]
     fn trie_from_iter() {
-        let trie = Trie::<u8>::from_iter(["a", "app", "apple", "better", "application"]);
+        let trie = Trie::<u8>::from_iter(
+            ["a", "app", "apple", "better", "application"]
+                .into_iter()
+                .map(|s| s.bytes()),
+        );
         assert!(trie.exact_match("application"));
     }
 
     #[test]
     fn collect_a_trie() {
-        let trie: Trie<u8> =
-            IntoIterator::into_iter(["a", "app", "apple", "better", "application"]).collect();
+        let trie: Trie<u8> = ["a", "app", "apple", "better", "application"]
+            .into_iter()
+            .map(|s| s.bytes())
+            .collect();
         assert!(trie.exact_match("application"));
     }
 
@@ -219,7 +227,7 @@ mod search_tests {
     #[rustfmt::skip]
     #[test]
     fn print_debug() {
-        let trie: Trie<u8> = ["a"].into_iter().collect();
+        let trie: Trie<u8> = ["a".bytes()].into_iter().collect();
         let actual = format!("{:#?}", trie);
         assert_eq!(actual, print_debug::EXPECTED_FMT);
     }
@@ -228,8 +236,8 @@ mod search_tests {
     #[test]
     fn print_debug_builder() {
         let mut builder = TrieBuilder::new();
-        builder.push("a");
-        builder.push("app");
+        builder.insert("a".bytes());
+        builder.insert("app".bytes());
         let actual = format!("{:#?}", builder);
         assert_eq!(actual, print_debug_builder::EXPECTED_FMT);
     }
@@ -270,9 +278,9 @@ mod search_tests {
             .lines()
             .take(COUNT)
         {
-            let l = result.unwrap();
-            accum += l.len();
-            builder.push(l);
+            let key = result.unwrap();
+            accum += key.len();
+            builder.insert(key.bytes());
             n_words += 1;
         }
         println!("Read {} words, {} bytes.", n_words, accum);

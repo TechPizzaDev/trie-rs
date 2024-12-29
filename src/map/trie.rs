@@ -3,7 +3,8 @@ use super::Trie;
 use crate::inc_search::IncSearch;
 use crate::iter::{PostfixIter, PrefixIter, SearchIter};
 use crate::try_collect::{TryCollect, TryFromIterator};
-use louds_rs::{AncestorNodeIter, ChildNodeIter, LoudsNodeNum};
+use fid::{BitVector, FID};
+use louds::{AncestorNodeIter, ChildNodeIter, LoudsNodeNum};
 use std::iter::FromIterator;
 
 impl<Label: Ord, Value> Trie<Label, Value> {
@@ -114,10 +115,24 @@ impl<Label: Ord, Value> Trie<Label, Value> {
     /// lexicographical order.
     ///
     /// ```rust
-    /// use trie_rs::map::Trie;
-    /// let trie = Trie::from_iter([("a", 0), ("app", 1), ("apple", 2), ("better", 3), ("application", 4)]);
+    /// use trie::map::Trie;
+    ///
+    /// let trie = Trie::from_iter(
+    ///     [("a", 0), ("app", 1), ("apple", 2), ("better", 3), ("application", 4)]
+    ///         .into_iter()
+    ///         .map(|e| (e.0.bytes(), e.1))
+    /// );
     /// let results: Vec<(String, &u8)> = trie.iter().collect();
-    /// assert_eq!(results, [("a".to_string(), &0u8), ("app".to_string(), &1u8), ("apple".to_string(), &2u8), ("application".to_string(), &4u8), ("better".to_string(), &3u8)]);
+    /// assert_eq!(
+    ///     results, 
+    ///     [
+    ///         ("a".to_string(), &0u8), 
+    ///         ("app".to_string(), &1u8), 
+    ///         ("apple".to_string(), &2u8), 
+    ///         ("application".to_string(), &4u8), 
+    ///         ("better".to_string(), &3u8)
+    ///     ]
+    /// );
     /// ```
     pub fn iter<C, M>(&self) -> PostfixIter<'_, Label, Value, C, M>
     where
@@ -196,7 +211,7 @@ impl<Label: Ord, Value> Trie<Label, Value> {
             .is_some()
     }
 
-    pub(crate) fn children_node_nums(&self, node_num: LoudsNodeNum) -> ChildNodeIter {
+    pub(crate) fn children_node_nums(&self, node_num: LoudsNodeNum) -> ChildNodeIter<BitVector> {
         self.louds.parent_to_children_nodes(node_num)
     }
 
@@ -218,7 +233,7 @@ impl<Label: Ord, Value> Trie<Label, Value> {
 
     pub(crate) fn value(&self, node_num: LoudsNodeNum) -> Option<&Value> {
         if self.terminals[node_num.0] {
-            let idx = self.terminals.rank(node_num.0) - 1;
+            let idx = self.terminals.rank1(node_num.0);
             Some(&self.values[idx as usize])
         } else {
             None
@@ -227,31 +242,30 @@ impl<Label: Ord, Value> Trie<Label, Value> {
 
     pub(crate) fn value_mut(&mut self, node_num: LoudsNodeNum) -> Option<&mut Value> {
         if self.terminals[node_num.0] {
-            let idx = self.terminals.rank(node_num.0) - 1;
+            let idx = self.terminals.rank1(node_num.0);
             Some(&mut self.values[idx as usize])
         } else {
             None
         }
     }
 
-    pub(crate) fn child_to_ancestors(&self, node_num: LoudsNodeNum) -> AncestorNodeIter {
+    pub(crate) fn child_to_ancestors(&self, node_num: LoudsNodeNum) -> AncestorNodeIter<BitVector> {
         self.louds.child_to_ancestors(node_num)
     }
 }
 
-impl<Label, Value, C> FromIterator<(C, Value)> for Trie<Label, Value>
+impl<Label, Value, Key> FromIterator<(Key, Value)> for Trie<Label, Value>
 where
-    C: AsRef<[Label]>,
+    Key: IntoIterator<Item = Label>,
     Label: Ord + Clone,
 {
     fn from_iter<T>(iter: T) -> Self
     where
-        Self: Sized,
-        T: IntoIterator<Item = (C, Value)>,
+        T: IntoIterator<Item = (Key, Value)>,
     {
         let mut builder = super::TrieBuilder::new();
         for (k, v) in iter {
-            builder.push(k, v)
+            builder.insert(k, v);
         }
         builder.build()
     }
@@ -264,12 +278,12 @@ mod search_tests {
 
     fn build_trie() -> Trie<u8, u8> {
         let mut builder = TrieBuilder::new();
-        builder.push("a", 0);
-        builder.push("app", 1);
-        builder.push("apple", 2);
-        builder.push("better", 3);
-        builder.push("application", 4);
-        builder.push("アップル🍎", 5);
+        builder.insert("a".bytes(), 0);
+        builder.insert("app".bytes(), 1);
+        builder.insert("apple".bytes(), 2);
+        builder.insert("better".bytes(), 3);
+        builder.insert("application".bytes(), 4);
+        builder.insert("アップル🍎".bytes(), 5);
         builder.build()
     }
 
@@ -308,20 +322,22 @@ mod search_tests {
 
     #[test]
     fn trie_from_iter() {
-        let trie = Trie::<u8, u8>::from_iter([
-            ("a", 0),
-            ("app", 1),
-            ("apple", 2),
-            ("better", 3),
-            ("application", 4),
-        ]);
+        let trie = Trie::<u8, u8>::from_iter(
+            [
+                ("a", 0),
+                ("app", 1),
+                ("apple", 2),
+                ("better", 3),
+                ("application", 4),
+            ]
+            .into_iter()
+            .map(|e| (e.0.bytes(), e.1)),
+        );
         assert_eq!(trie.exact_match("application"), Some(&4));
     }
 
     #[test]
     fn collect_a_trie() {
-        // Does not work with arrays in rust 2018 because into_iter() returns references instead of owned types.
-        // let trie: Trie<u8, u8> = [("a", 0), ("app", 1), ("apple", 2), ("better", 3), ("application", 4)].into_iter().collect();
         let trie: Trie<u8, u8> = vec![
             ("a", 0),
             ("app", 1),
@@ -330,6 +346,7 @@ mod search_tests {
             ("application", 4),
         ]
         .into_iter()
+        .map(|e| (e.0.bytes(), e.1))
         .collect();
         assert_eq!(trie.exact_match("application"), Some(&4));
     }
@@ -345,7 +362,11 @@ mod search_tests {
 
     #[test]
     fn insert_order_dependent() {
-        let trie = Trie::from_iter([("a", 0), ("app", 1), ("apple", 2)]);
+        let trie = Trie::from_iter(
+            [("a", 0), ("app", 1), ("apple", 2)]
+                .into_iter()
+                .map(|e| (e.0.bytes(), e.1)),
+        );
         let results: Vec<(String, &u8)> = trie.iter().collect();
         assert_eq!(
             results,
@@ -356,7 +377,11 @@ mod search_tests {
             ]
         );
 
-        let trie = Trie::from_iter([("a", 0), ("apple", 2), ("app", 1)]);
+        let trie = Trie::from_iter(
+            [("a", 0), ("apple", 2), ("app", 1)]
+                .into_iter()
+                .map(|e| (e.0.bytes(), e.1)),
+        );
         let results: Vec<(String, &u8)> = trie.iter().collect();
         assert_eq!(
             results,

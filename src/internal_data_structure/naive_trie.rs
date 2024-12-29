@@ -1,9 +1,6 @@
 pub mod naive_trie_b_f_iter;
 pub mod naive_trie_impl;
 
-#[cfg(feature = "mem_dbg")]
-use mem_dbg::MemDbg;
-
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(mem_dbg::MemDbg, mem_dbg::MemSize))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

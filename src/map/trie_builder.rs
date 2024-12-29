@@ -1,7 +1,7 @@
 use crate::internal_data_structure::naive_trie::NaiveTrie;
 use crate::map::{Trie, TrieBuilder};
-use fid_rs::Fid;
-use louds_rs::Louds;
+use fid::bit_vec;
+use louds::Louds;
 
 impl<Label: Ord, Value> Default for TrieBuilder<Label, Value> {
     fn default() -> Self {
@@ -16,24 +16,28 @@ impl<Label: Ord, Value> TrieBuilder<Label, Value> {
         Self { naive_trie }
     }
 
-    /// Add a cloneable entry and value.
-    pub fn push<Arr: AsRef<[Label]>>(&mut self, entry: Arr, value: Value)
-    where
-        Label: Clone,
-    {
-        self.naive_trie.push(entry.as_ref().iter().cloned(), value);
+    /// Gets the entry for the given sequence for in-place manipulation.
+    pub fn entry<Key: IntoIterator<Item = Label>>(
+        &mut self,
+        key: Key,
+    ) -> &mut Option<Value> {
+        self.naive_trie.entry(key.into_iter())
     }
 
-    /// Add an entry and value.
-    pub fn insert<Arr: IntoIterator<Item = Label>>(&mut self, entry: Arr, value: Value) {
-        self.naive_trie.push(entry.into_iter(), value);
+    /// Insert a value for the given sequence.
+    pub fn insert<Key: IntoIterator<Item = Label>>(
+        &mut self,
+        key: Key,
+        value: Value,
+    ) -> Option<Value> {
+        self.entry(key).replace(value)
     }
 
     /// Build a [Trie].
     pub fn build(self) -> Trie<Label, Value> {
-        let mut louds_bits: Vec<bool> = vec![true, false];
+        let mut louds_bits = bit_vec![true, false];
         let mut labels: Vec<Label> = vec![];
-        let mut terminal_bits: Vec<bool> = vec![false, false];
+        let mut terminals = bit_vec![false, false];
         let mut values: Vec<Value> = vec![];
 
         for node in self.naive_trie.into_iter() {
@@ -49,7 +53,7 @@ impl<Label: Ord, Value> TrieBuilder<Label, Value> {
                     } else {
                         false
                     };
-                    terminal_bits.push(is_terminal);
+                    terminals.push(is_terminal);
                 }
                 NaiveTrie::PhantomSibling => {
                     louds_bits.push(false);
@@ -57,8 +61,17 @@ impl<Label: Ord, Value> TrieBuilder<Label, Value> {
             }
         }
 
-        let louds = Louds::from(louds_bits.as_slice());
-        let terminals = Fid::from(terminal_bits.as_slice());
+        louds_bits.shrink_to_fit();
+        labels.shrink_to_fit();
+        terminals.shrink_to_fit();
+        values.shrink_to_fit();
+
+        let louds = if cfg!(debug_assertions) {
+            Louds::new(louds_bits).unwrap()
+        } else {
+            // SAFETY: NaiveTrie should produce valid bits
+            unsafe { Louds::new_unchecked(louds_bits) }
+        };
 
         Trie {
             louds,

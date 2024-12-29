@@ -1,26 +1,30 @@
 [package]
-name = "trie-rs"
-version = "0.4.2"
-authors = ["Sho Nakatani <lay.sakura@gmail.com>", "Shane Celis <shane.celis@gmail.com>"]
-description = "Memory efficient trie (prefix tree) and map library based on LOUDS"
+name = "trie64-rs"
+version = "0.1.0"
+authors = ["TechPizza", "Sho Nakatani <lay.sakura@gmail.com>", "Shane Celis <shane.celis@gmail.com>"]
+description = "Memory-efficient trie (prefix tree) based on LOUDS"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/laysakura/trie-rs"
-homepage = "https://github.com/laysakura/trie-rs"
+repository = "https://github.com/TechPizzaDev/trie-rs"
+homepage = "https://github.com/TechPizzaDev/trie-rs"
 keywords = ["trie", "louds", "succinct"] # up to 5 keywords, each keyword should have <= 20 chars
 categories = ["compression", "data-structures"]
 edition = "2021"
 
+[lib]
+name = "trie"
+
 [dependencies]
-louds-rs = "0.7"
-fid-rs = "0.2"
-mem_dbg = { version = "0.1.4", optional = true }
-serde = { version = "1.0", features = ["derive"], optional = true }
+louds64-rs = { version = "0.2", git = "https://github.com/TechPizzaDev/louds-rs.git" }
+fid64-rs = { version = "0.1", git = "https://github.com/TechPizzaDev/fid-rs.git" }
+
+mem_dbg = { version = "0.2", optional = true }
+serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [dev-dependencies]
-criterion = "0.2"
-rand = "0.6"
-lazy_static = "1.3"
+criterion = "0.5"
+rand = "0.8"
+lazy_static = "1.5"
 version-sync = "0.9"
 
 [[bench]]
@@ -28,6 +32,7 @@ name = "bench"
 harness = false
 
 [features]
-serde = ["louds-rs/serde", "dep:serde"]
-mem_dbg = ["louds-rs/mem_dbg", "dep:mem_dbg"]
-rayon = ["louds-rs/rayon"]
+serde = ["louds64-rs/serde", "fid64-rs/serde", "dep:serde"]
+mem_dbg = ["louds64-rs/mem_dbg", "fid64-rs/mem_dbg", "dep:mem_dbg"]
+
+default = ["serde", "mem_dbg"]

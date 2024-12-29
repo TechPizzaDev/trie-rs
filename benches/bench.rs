@@ -1,18 +1,4 @@
-#[macro_use]
-extern crate criterion;
-
-#[macro_use]
-extern crate lazy_static;
-
-use criterion::Criterion;
-use std::time::Duration;
-
-fn c() -> Criterion {
-    Criterion::default()
-        .sample_size(10) // must be >= 10 for Criterion v0.3
-        .warm_up_time(Duration::from_secs(1))
-        .with_plots()
-}
+use criterion::{criterion_group, criterion_main};
 
 fn git_hash() -> String {
     use std::process::Command;
@@ -25,10 +11,11 @@ fn git_hash() -> String {
 
 mod trie {
     use criterion::{black_box, BatchSize, Criterion};
+    use lazy_static::lazy_static;
     use std::env;
     use std::fs::File;
     use std::io::{BufRead, BufReader};
-    use trie_rs::{Trie, TrieBuilder};
+    use trie::{Trie, TrieBuilder};
 
     lazy_static! {
         // Construct Japanese dictionary using EDICT (http://www.edrdg.org/jmdict/edict.html).
@@ -42,7 +29,7 @@ mod trie {
             let mut n_words = 0;
             for result in BufReader::new(File::open(edict2_path).unwrap()).lines() {
                 let l = result.unwrap();
-                builder.push(l);
+                builder.insert(l.bytes());
                 n_words += 1;
             }
             println!("Read {} words.", n_words);
@@ -52,10 +39,10 @@ mod trie {
         };
     }
 
-    pub fn build(_: &mut Criterion) {
+    pub fn build(c: &mut Criterion) {
         let items = 10_000;
 
-        super::c().bench_function(
+        c.bench_function(
             &format!("[{}] Trie::build() {} items", super::git_hash(), items),
             move |b| {
                 b.iter_batched(
@@ -70,7 +57,7 @@ mod trie {
                         let mut n_words = 0;
                         for result in BufReader::new(File::open(edict2_path).unwrap()).lines() {
                             let l = result.unwrap();
-                            builder.push(l);
+                            builder.insert(l.bytes());
                             n_words += 1;
                             if n_words >= items {
                                 break;
@@ -84,10 +71,10 @@ mod trie {
         );
     }
 
-    pub fn exact_match(_: &mut Criterion) {
+    pub fn exact_match(c: &mut Criterion) {
         let times = 100;
 
-        super::c().bench_function(
+        c.bench_function(
             &format!(
                 "[{}] Trie::exact_match() {} times",
                 super::git_hash(),
@@ -113,10 +100,10 @@ mod trie {
         );
     }
 
-    pub fn predictive_search(_: &mut Criterion) {
+    pub fn predictive_search(c: &mut Criterion) {
         let times = 100;
 
-        super::c().bench_function(
+        c.bench_function(
             &format!(
                 "[{}] Trie::predictive_search() {} times",
                 super::git_hash(),
@@ -160,8 +147,8 @@ mod trie {
         );
     }
 
-    pub fn predictive_search_big_output(_: &mut Criterion) {
-        super::c().bench_function(
+    pub fn predictive_search_big_output(c: &mut Criterion) {
+        c.bench_function(
             &format!(
                 "[{}] Trie::predictive_search_big_output()",
                 super::git_hash(),
@@ -181,8 +168,8 @@ mod trie {
         );
     }
 
-    pub fn predictive_search_limited_big_output(_: &mut Criterion) {
-        super::c().bench_function(
+    pub fn predictive_search_limited_big_output(c: &mut Criterion) {
+        c.bench_function(
             &format!(
                 "[{}] Trie::predictive_search_limited_big_output()",
                 super::git_hash(),
@@ -201,10 +188,10 @@ mod trie {
         );
     }
 
-    pub fn common_prefix_search(_: &mut Criterion) {
+    pub fn common_prefix_search(c: &mut Criterion) {
         let times = 100;
 
-        super::c().bench_function(
+        c.bench_function(
             &format!(
                 "[{}] Trie::common_prefix_search() {} times",
                 super::git_hash(),
@@ -233,10 +220,10 @@ mod trie {
         );
     }
 
-    pub fn common_prefix_match(_: &mut Criterion) {
+    pub fn common_prefix_match(c: &mut Criterion) {
         let times = 100;
 
-        super::c().bench_function(
+        c.bench_function(
             &format!(
                 "[{}] Trie::common_prefix_match() {} times",
                 super::git_hash(),

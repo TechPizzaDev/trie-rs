@@ -23,23 +23,23 @@ To use trie-rs, add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-trie-rs = "0.4.2"
+trie64-rs = "0.1.0"
 ```
 
 ### Usage Overview
 ```rust
 use std::str;
-use trie_rs::TrieBuilder;
+use trie::TrieBuilder;
 
 let mut builder = TrieBuilder::new();  // Inferred `TrieBuilder<u8>` automatically
-builder.push("すし");
-builder.push("すしや");
-builder.push("すしだね");
-builder.push("すしづめ");
-builder.push("すしめし");
-builder.push("すしをにぎる");
-builder.push("すし");  // Word `push`ed twice is just ignored.
-builder.push("🍣");
+builder.insert("すし".bytes());
+builder.insert("すしや".bytes());
+builder.insert("すしだね".bytes());
+builder.insert("すしづめ".bytes());
+builder.insert("すしめし".bytes());
+builder.insert("すしをにぎる".bytes());
+builder.insert("すし".bytes());  // Word `insert`ed twice is ignored.
+builder.insert("🍣".bytes());
 
 let trie = builder.build();
 
@@ -96,12 +96,12 @@ Here shows other `Label` and `Arr` type examples.
 Say `Label` is English words and `Arr` is English phrases.
 
 ```rust
-use trie_rs::TrieBuilder;
+use trie::TrieBuilder;
 
 let mut builder = TrieBuilder::new();
-builder.push(vec!["a", "woman"]);
-builder.push(vec!["a", "woman", "on", "the", "beach"]);
-builder.push(vec!["a", "woman", "on", "the", "run"]);
+builder.insert(vec!["a", "woman"]);
+builder.insert(vec!["a", "woman", "on", "the", "beach"]);
+builder.insert(vec!["a", "woman", "on", "the", "run"]);
 
 let trie = builder.build();
 
@@ -128,24 +128,24 @@ assert_eq!(
 Say `Label` is a digit in Pi (= 3.14...) and Arr is a window to separate pi's digit by 10.
 
 ```rust
-use trie_rs::TrieBuilder;
+use trie::TrieBuilder;
 
 let mut builder = TrieBuilder::<u8>::new(); // Pi = 3.14...
 
-builder.push([1, 4, 1, 5, 9, 2, 6, 5, 3, 5]);
-builder.push([8, 9, 7, 9, 3, 2, 3, 8, 4, 6]);
-builder.push([2, 6, 4, 3, 3, 8, 3, 2, 7, 9]);
-builder.push([6, 9, 3, 9, 9, 3, 7, 5, 1, 0]);
-builder.push([5, 8, 2, 0, 9, 7, 4, 9, 4, 4]);
-builder.push([5, 9, 2, 3, 0, 7, 8, 1, 6, 4]);
-builder.push([0, 6, 2, 8, 6, 2, 0, 8, 9, 9]);
-builder.push([8, 6, 2, 8, 0, 3, 4, 8, 2, 5]);
-builder.push([3, 4, 2, 1, 1, 7, 0, 6, 7, 9]);
-builder.push([8, 2, 1, 4, 8, 0, 8, 6, 5, 1]);
-builder.push([3, 2, 8, 2, 3, 0, 6, 6, 4, 7]);
-builder.push([0, 9, 3, 8, 4, 4, 6, 0, 9, 5]);
-builder.push([5, 0, 5, 8, 2, 2, 3, 1, 7, 2]);
-builder.push([5, 3, 5, 9, 4, 0, 8, 1, 2, 8]);
+builder.insert([1, 4, 1, 5, 9, 2, 6, 5, 3, 5]);
+builder.insert([8, 9, 7, 9, 3, 2, 3, 8, 4, 6]);
+builder.insert([2, 6, 4, 3, 3, 8, 3, 2, 7, 9]);
+builder.insert([6, 9, 3, 9, 9, 3, 7, 5, 1, 0]);
+builder.insert([5, 8, 2, 0, 9, 7, 4, 9, 4, 4]);
+builder.insert([5, 9, 2, 3, 0, 7, 8, 1, 6, 4]);
+builder.insert([0, 6, 2, 8, 6, 2, 0, 8, 9, 9]);
+builder.insert([8, 6, 2, 8, 0, 3, 4, 8, 2, 5]);
+builder.insert([3, 4, 2, 1, 1, 7, 0, 6, 7, 9]);
+builder.insert([8, 2, 1, 4, 8, 0, 8, 6, 5, 1]);
+builder.insert([3, 2, 8, 2, 3, 0, 6, 6, 4, 7]);
+builder.insert([0, 9, 3, 8, 4, 4, 6, 0, 9, 5]);
+builder.insert([5, 0, 5, 8, 2, 2, 3, 1, 7, 2]);
+builder.insert([5, 3, 5, 9, 4, 0, 8, 1, 2, 8]);
 
 let trie = builder.build();
 
@@ -168,21 +168,21 @@ assert_eq!(
 
 ### Trie Map Usage
 
-To store a value with each word, use `trie_rs::map::{Trie, TrieBuilder}`.
+To store a value with each word, use `trie::map::{Trie, TrieBuilder}`.
 
 ```rust
 use std::str;
-use trie_rs::map::TrieBuilder;
+use trie::map::TrieBuilder;
 
-let mut builder = TrieBuilder::new();  // Inferred `TrieBuilder<u8, u8>` automatically
-builder.push("すし", 0);
-builder.push("すしや", 1);
-builder.push("すしだね", 2);
-builder.push("すしづめ", 3);
-builder.push("すしめし", 4);
-builder.push("すしをにぎる", 5);
-builder.push("すし", 6);  // Word `push`ed twice uses last value.
-builder.push("🍣", 7);
+let mut builder = TrieBuilder::new(); // Inferred `TrieBuilder<u8, u8>` 
+builder.insert("すし".bytes(), 0);
+builder.insert("すしや".bytes(), 1);
+builder.insert("すしだね".bytes(), 2);
+builder.insert("すしづめ".bytes(), 3);
+builder.insert("すしめし".bytes(), 4);
+builder.insert("すしをにぎる".bytes(), 5);
+builder.insert("すし".bytes(), 6);  // Word `insert`ed twice uses last value.
+builder.insert("🍣".bytes(), 7);
 
 let mut trie = builder.build();
 
@@ -204,16 +204,16 @@ best performance. See [IncSearch][crate::inc_search::IncSearch].
 
 ```rust
 use std::str;
-use trie_rs::{TrieBuilder, inc_search::Answer};
+use trie::{TrieBuilder, inc_search::Answer};
 
-let mut builder = TrieBuilder::new();  // Inferred `TrieBuilder<u8, u8>` automatically
-builder.push("ab");
-builder.push("すし");
-builder.push("すしや");
-builder.push("すしだね");
-builder.push("すしづめ");
-builder.push("すしめし");
-builder.push("すしをにぎる");
+let mut builder = TrieBuilder::new(); // Inferred `TrieBuilder<u8, u8>` 
+builder.insert("ab".bytes());
+builder.insert("すし".bytes());
+builder.insert("すしや".bytes());
+builder.insert("すしだね".bytes());
+builder.insert("すしづめ".bytes());
+builder.insert("すしめし".bytes());
+builder.insert("すしをにぎる".bytes());
 let trie = builder.build();
 let mut search = trie.inc_search();
 
